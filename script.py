@@ -3,21 +3,34 @@ import os
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException
-from colorama import init, Fore
+from colorama import Fore, Style
 
-# Initialize colorama
-init(autoreset=True)
+# Prompt the user for headless or normal mode
+mode = input("Do you want to run the script in headless mode? (yes/no): ").strip().lower()
 
-# Set up the webdriver
-driver = webdriver.Chrome()
+# Set up the Chrome options for headless mode if the user selects headless
+chrome_options = Options()
+if mode == "yes":
+    chrome_options.add_argument("--headless")  # Run in headless mode
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+else:
+    print(Fore.CYAN + "Running in normal mode...")
+
+# Initialize the WebDriver
+driver = webdriver.Chrome(options=chrome_options)
+
+# Ensure the CSVs directory exists
+if not os.path.exists('CSVs'):
+    os.makedirs('CSVs')
 
 # Function to process each page
 def process_page(url):
     try:
-        print(Fore.YELLOW + f"Processing {url}...")
+        print(Fore.CYAN + f"Processing {url}...")
 
         # Open the webpage
         driver.get(url)
@@ -37,7 +50,7 @@ def process_page(url):
                 h2_tag = quote_cards.find_element(By.TAG_NAME, 'h1').text
 
                 # Sanitize the h2_tag to create a valid file name
-                file_name = f"{h2_tag.replace(' ', '_').replace('/', '_').replace('\\', '_')}.csv"
+                file_name = f"CSVs/{h2_tag.replace(' ', '_').replace('/', '_').replace('\\', '_')}.csv"
 
                 # Prepare the CSV file for writing
                 with open(file_name, mode='w', newline='', encoding='utf-8') as file:
@@ -49,7 +62,7 @@ def process_page(url):
                     items = items_container.find_elements(By.XPATH, '//div[@class="card"]')
 
                     if not items:
-                        print(Fore.RED + f"No products found on {url}. Moving to the next link...")
+                        print(Fore.YELLOW + f"No products found on {url}. Moving to the next link...")
                         return
 
                     for index, item in enumerate(items):
@@ -65,24 +78,20 @@ def process_page(url):
                             writer.writerow([img_link, title_text, price_text])
 
                             print(Fore.GREEN + f"Produit {index + 1}:")
-                            print(f"  Image Link: {img_link}")
-                            print(f"  Title: {title_text}")
-                            print(f"  Price: {price_text}")
+                            print(Fore.GREEN + f"  Image Link: {img_link}")
+                            print(Fore.GREEN + f"  Title: {title_text}")
+                            print(Fore.GREEN + f"  Price: {price_text}")
 
                         except Exception as e:
                             print(Fore.RED + f"Error processing item {index + 1}: {e}")
 
-                print(Fore.GREEN + f"Data exported to {file_name}")
+                print(Fore.BLUE + f"Data exported to {file_name}")
 
             except Exception as e:
-                print(Fore.RED + f"No content found or error extracting details on {url}. Error: {e}. Moving to the next link...")
+                print(Fore.YELLOW + f"No content found or error extracting details on {url}. Error: {e}. Moving to the next link...")
 
-        except WebDriverException as e:
-            # Handle the "no such window" and similar WebDriverException errors
-            if "no such window" in str(e):
-                print(Fore.YELLOW + f"Page at {url} is not available or already closed. Moving to next link...")
-            else:
-                print(Fore.RED + f"Error loading page {url}: {e}. Moving to the next link...")
+        except Exception as e:
+            print(Fore.RED + f"Error loading page {url}: {e}. Moving to the next link...")
 
     except Exception as e:
         print(Fore.RED + f"Error processing {url}: {e}. Moving to the next link...")
@@ -91,7 +100,7 @@ def process_page(url):
 for category in range(121, 128):
     if category == 123:  # Skip category 123
         continue
-    for i in range(700, 738):
+    for i in range(700, 751):
         url = f"https://www.elkolla.scanini.tn/client/categories/{category}/{i}"
         process_page(url)
 
