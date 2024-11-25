@@ -35,8 +35,30 @@ def normalize_name(filename):
     name = name.replace("_", " ")         # Replace underscores with spaces
     return name.strip()                   # Trim whitespace
 
+def generate_reference(product_name, index, used_references):
+    """
+    Generate a unique 5-character reference for each product based on its name and index.
+    Ensures uniqueness by checking if the reference is already used.
+    """
+    # Use the product name and index to create a potential reference
+    reference = (product_name[:3] + str(index)[:2]).upper()[:5]
+    
+    # Ensure uniqueness by checking against used references
+    original_reference = reference
+    count = 1
+    while reference in used_references:
+        # Modify the reference by appending a number to ensure it's unique
+        reference = f"{original_reference}{count}"[:5]
+        count += 1
+    
+    # Add the reference to the set of used references
+    used_references.add(reference)
+    
+    return reference
+
 def process_csv_files(folder_path):
     all_dataframes = []  # List to hold all processed DataFrames
+    used_references = set()  # Set to track used references
 
     # Iterate through all files in the specified folder
     for filename in os.listdir(folder_path):
@@ -57,6 +79,11 @@ def process_csv_files(folder_path):
                 # Add the new columns
                 df['sub-category'] = sub_category
                 df['category'] = category
+                
+                # Generate and add the 'reference' column
+                df['reference'] = df.apply(
+                    lambda row: generate_reference(row['Title'], row.name, used_references), axis=1
+                )
                 
                 # Add the DataFrame to the list
                 all_dataframes.append(df)
