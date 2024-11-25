@@ -36,6 +36,8 @@ def normalize_name(filename):
     return name.strip()                   # Trim whitespace
 
 def process_csv_files(folder_path):
+    all_dataframes = []  # List to hold all processed DataFrames
+
     # Iterate through all files in the specified folder
     for filename in os.listdir(folder_path):
         # Check if it's a CSV file
@@ -56,6 +58,9 @@ def process_csv_files(folder_path):
                 df['sub-category'] = sub_category
                 df['category'] = category
                 
+                # Add the DataFrame to the list
+                all_dataframes.append(df)
+                
                 # Define the output file path (new cleaned file)
                 output_path = os.path.join(folder_path, f"cleaned_{filename}")
                 
@@ -68,6 +73,15 @@ def process_csv_files(folder_path):
                 # Log skipped files with explanation
                 print(f"{Fore.YELLOW}No category mapping found for {filename} "
                       f"(normalized as '{normalized_name}'), skipping.{Style.RESET_ALL}")
+
+    # Merge all processed DataFrames and save as all_products.csv
+    if all_dataframes:
+        merged_df = pd.concat(all_dataframes, ignore_index=True)
+        merged_output_path = os.path.join(folder_path, "all_products.csv")
+        merged_df.to_csv(merged_output_path, index=False)
+        print(f"{Fore.CYAN}All processed CSVs merged and saved as: {merged_output_path}{Style.RESET_ALL}")
+    else:
+        print(f"{Fore.RED}No CSVs were processed, skipping merging.{Style.RESET_ALL}")
 
 if __name__ == "__main__":
     print(f"{Fore.CYAN}Welcome to the CSV Cleaner Script!{Style.RESET_ALL}")
