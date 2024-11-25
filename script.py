@@ -5,6 +5,11 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import WebDriverException
+from colorama import init, Fore
+
+# Initialize colorama
+init(autoreset=True)
 
 # Set up the webdriver
 driver = webdriver.Chrome()
@@ -12,7 +17,7 @@ driver = webdriver.Chrome()
 # Function to process each page
 def process_page(url):
     try:
-        print(f"Processing {url}...")
+        print(Fore.YELLOW + f"Processing {url}...")
 
         # Open the webpage
         driver.get(url)
@@ -44,7 +49,7 @@ def process_page(url):
                     items = items_container.find_elements(By.XPATH, '//div[@class="card"]')
 
                     if not items:
-                        print(f"No products found on {url}. Moving to the next link...")
+                        print(Fore.RED + f"No products found on {url}. Moving to the next link...")
                         return
 
                     for index, item in enumerate(items):
@@ -59,24 +64,28 @@ def process_page(url):
                             # Write item data to CSV
                             writer.writerow([img_link, title_text, price_text])
 
-                            print(f"Produit {index + 1}:")
+                            print(Fore.GREEN + f"Produit {index + 1}:")
                             print(f"  Image Link: {img_link}")
                             print(f"  Title: {title_text}")
                             print(f"  Price: {price_text}")
 
                         except Exception as e:
-                            print(f"Error processing item {index + 1}: {e}")
+                            print(Fore.RED + f"Error processing item {index + 1}: {e}")
 
-                print(f"Data exported to {file_name}")
+                print(Fore.GREEN + f"Data exported to {file_name}")
 
             except Exception as e:
-                print(f"No content found or error extracting details on {url}. Error: {e}. Moving to the next link...")
+                print(Fore.RED + f"No content found or error extracting details on {url}. Error: {e}. Moving to the next link...")
 
-        except Exception as e:
-            print(f"Error loading page {url}: {e}. Moving to the next link...")
+        except WebDriverException as e:
+            # Handle the "no such window" and similar WebDriverException errors
+            if "no such window" in str(e):
+                print(Fore.YELLOW + f"Page at {url} is not available or already closed. Moving to next link...")
+            else:
+                print(Fore.RED + f"Error loading page {url}: {e}. Moving to the next link...")
 
     except Exception as e:
-        print(f"Error processing {url}: {e}. Moving to the next link...")
+        print(Fore.RED + f"Error processing {url}: {e}. Moving to the next link...")
 
 # Loop through categories 121 to 127, excluding 123
 for category in range(121, 128):
