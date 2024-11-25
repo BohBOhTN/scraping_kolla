@@ -78,10 +78,13 @@ def process_page(url):
     except Exception as e:
         print(f"Error processing {url}: {e}. Moving to the next link...")
 
-# Loop through the range of links and process each one
-for i in range(700, 751):
-    url = f"https://www.elkolla.scanini.tn/client/categories/121/{i}"
-    process_page(url)
+# Loop through categories 121 to 127, excluding 123
+for category in range(121, 128):
+    if category == 123:  # Skip category 123
+        continue
+    for i in range(700, 738):
+        url = f"https://www.elkolla.scanini.tn/client/categories/{category}/{i}"
+        process_page(url)
 
 # Close the webdriver after all processing is done
 driver.quit()
